@@ -1,3 +1,4 @@
+/*
 Copyright (c) 2018 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
@@ -18,3 +19,22 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+#include "NetLogWrapper.h"
+
+#include <unistd.h>
+
+/**
+ * Usage example
+ */
+int main() {
+  netlog("Test Start");
+  int i = 0;
+  while(true) {
+    netlog("val : %d", i);
+    i++;
+    sleep(1);
+  }
+  return 0; 
+}

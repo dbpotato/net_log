@@ -1,3 +1,4 @@
+/*
 Copyright (c) 2018 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
@@ -18,3 +19,23 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+#pragma once
+
+class MessageType {
+public:
+  enum Type {
+    UNKNOWN = 0,
+    ARE_U_ALIVE,
+    IAM_ALIVE,
+    YOU_SHOULD_KNOW_THAT,
+    END
+  };
+
+  static Type TypeFromInt(uint8_t type) {
+    if(type < Type::END)
+      return (Type) type;
+    return Type::UNKNOWN;
+  }
+};
