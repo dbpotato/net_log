@@ -33,7 +33,6 @@ const size_t CHECK_INTERVAL_IN_SEC = 3;
 NetReader::NetReader() {
   _connection = std::make_shared<Connection>();
   _connection->Init();
-  log()->set_pattern("%v");
 }
 
 void NetReader::Init(const std::string& host, int port) {
@@ -44,7 +43,6 @@ void NetReader::Init(const std::string& host, int port) {
                                                 ,host
                                                 ,port);
     _checker->Init();
-
     log()->info("NetReader: Awaiting connection");
   }
   else
@@ -81,8 +79,7 @@ void NetReader::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Mes
 }
 
 void NetReader::OnLogReceived(const std::string& msg) {
-  //log()->info("{}", msg);
-  printf("%s\n", msg.c_str());
+  log()->info("{}", msg);
 }
 
 void NetReader::OnClientClosed(std::shared_ptr<Client> client) {
@@ -95,9 +92,11 @@ void NetReader::CloseClient(){
     log()->info("NetReader: Connection closed, awaiting new connection");
     _client.reset();
   }
+  _checker->Reset();
 }
 
 int main(int argc,const char** args) {
+  log()->set_pattern("%v");
   if(argc < 3)
       return 0;
   std::shared_ptr<NetReader> reader = std::make_shared<NetReader>();

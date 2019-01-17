@@ -34,12 +34,15 @@ set (CXX_FLAGS
  -Wcast-qual"
 )
 
+#add_definitions(-DENABLE_DEBUG_LOGGER)
+
 set(CMAKE_CXX_FLAGS "${CXX_FLAGS}")
 set(CMAKE_SYSTEM_NAME linux)
 set(DEFAULT_CXX "g++")
 
 set(COMMON_DIR "${PROJECT_SOURCE_DIR}/common")
 set(SRC_DIR "${PROJECT_SOURCE_DIR}")
+
 
 if(DEFINED ENV{CXX})
   message("Using user's compiler : " $ENV{CXX})
@@ -49,8 +52,8 @@ else(DEFINED ENV{CXX})
   set(CMAKE_CXX_COMPILER ${DEFAULT_CXX})
 endif(DEFINED ENV{CXX})
 
-#set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER})
-#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER})
 
 
@@ -61,6 +64,7 @@ include_directories(
   "${COMMON_DIR}/tools/net")
 
 set(COMMON
+  ${COMMON_DIR}/tools/net/SocketObject.cpp
   ${COMMON_DIR}/tools/net/Client.cpp
   ${COMMON_DIR}/tools/net/Connection.cpp
   ${COMMON_DIR}/tools/net/Message.cpp
