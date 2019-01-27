@@ -36,6 +36,14 @@ const int SERVER_PORT = 4156; ///< listening port
  */
 const int MSG_QUEUE_SIZE = 200;
 
+/*
+ * Message format as described at :
+ * https://github.com/gabime/spdlog/wiki/3.-Custom-formatting
+ * For example '[%H:%M:%S:%e] [%t] %v' will provide additional time and thread info.
+ * By defaul nothing is added to original message.
+ */
+const char* MSG_FORMAT="%v";
+
 class NetLog {
 public:
   NetLog()
@@ -48,11 +56,11 @@ public:
       printf("NetLog : Can't load libnetlog.so %s\n", dlerror());
   }
   else {
-    init = (bool(*)(int, size_t)) dlsym(_lib_handler, "init");
+    init = (bool(*)(int, size_t, const char*)) dlsym(_lib_handler, "init");
     log_msg = (void(*)(const char*)) dlsym(_lib_handler, "log_msg");
  
     if(init && log_msg) {
-      if(init(SERVER_PORT, MSG_QUEUE_SIZE))
+      if(init(SERVER_PORT, MSG_QUEUE_SIZE, MSG_FORMAT))
         _is_valid = true;
       else
         printf("NetLog : Can't start server at port %d\n", SERVER_PORT);
@@ -78,7 +86,7 @@ public:
     return instance;
   }
 protected:
-  bool(*init)(int, size_t);
+  bool(*init)(int, size_t, const char*);
   void(*log_msg)(const char*);
   bool _is_valid;
   void* _lib_handler;

@@ -8,9 +8,9 @@
 std::shared_ptr<NetLogger> g_logger;
 std::shared_ptr<Connection> g_connection;
 
-extern "C" bool init(int port, size_t max_queue) {
+extern "C" bool init(int port, size_t max_queue, const char* log_format) {
   if(!g_logger) {
-    g_logger = std::make_shared<NetLogger>(max_queue);
+    g_logger = std::make_shared<NetLogger>(max_queue, log_format);
     g_connection = std::make_shared<Connection>();
     g_connection->Init();
     return g_logger->Init(port, g_connection);

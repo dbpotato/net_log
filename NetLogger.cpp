@@ -32,8 +32,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <iostream>
 #include <stdio.h>
 
-NetLogger::NetLogger(size_t msg_queue_size)
+const int MSG_LOGGER_ID = 10;
+
+void spdlog_func(spdlog::level::level_enum lv, const std::string& str, void* arg) {
+  auto net_logger = static_cast<NetLogger*>(arg);
+  net_logger->LogInternal(str);
+}
+
+NetLogger::NetLogger(size_t msg_queue_size, std::string log_format)
     : _msg_queue_size(msg_queue_size) {
+  set_log_func(spdlog_func, MSG_LOGGER_ID, this);
+  log(MSG_LOGGER_ID)->set_pattern(log_format);
 }
 
 void NetLogger::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
@@ -52,6 +61,10 @@ void NetLogger::OnClientConnected(std::shared_ptr<Client> client) {
 }
 
 void NetLogger::Log(const std::string& msg) {
+  log(MSG_LOGGER_ID)->info(msg);
+}
+
+void NetLogger::LogInternal(const std::string& msg) {
   auto msg_obj = std::make_shared<Message>((uint8_t)MessageType::YOU_SHOULD_KNOW_THAT, msg);
   AddMsg(msg_obj);
 

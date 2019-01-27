@@ -41,8 +41,9 @@ public:
  /**
   * Class constructor
   * \param msg_queue_size amount of last logs which will be stored
+  * \param log_format spdlog format which will be added to messages
   */
-  NetLogger(size_t msg_queue_size);
+  NetLogger(size_t msg_queue_size, std::string log_format);
   /**
    * Overrides ServerImpl
    */
@@ -53,10 +54,16 @@ public:
   void OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) override;
 
   /**
-   * Adds new logs to store and send to connected clients
+   * Passthrough message trough spdlog to add formating
    * msg log message
    */
   void Log(const std::string& msg);
+
+  /**
+   * Adds new logs to store and send to connected clients
+   * msg log message
+   */
+  void LogInternal(const std::string& msg);
 
 protected :
   /**
