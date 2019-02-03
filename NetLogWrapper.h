@@ -21,20 +21,22 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#pragma once
 
 #include <dlfcn.h>
 #include <stdio.h>
 #include <string>
 #include <cstdarg>
 #include <vector>
+#include <sstream>
 
-const int SERVER_PORT = 4156; ///< listening port
+static const int NET_LOG_SERVER_PORT = 4156; ///< listening port
 
 /*
  * Number of stored logs. On connection client
  * will recive all stored logs.
  */
-const int MSG_QUEUE_SIZE = 200;
+static const int NET_LOG_MSG_QUEUE_SIZE = 200;
 
 /*
  * Message format as described at :
@@ -42,31 +44,33 @@ const int MSG_QUEUE_SIZE = 200;
  * For example '[%H:%M:%S:%e] [%t] %v' will provide additional time and thread info.
  * By defaul nothing is added to original message.
  */
-const char* MSG_FORMAT="%v";
+static const char* NET_LOG_MSG_FORMAT="%v";
 
 class NetLog {
 public:
   NetLog()
-    : init(nullptr)
-    , log_msg(nullptr)
-    , _is_valid(false)
-    , _lib_handler(nullptr) {
+      : init(nullptr)
+      , log_msg(nullptr)
+      , _is_valid(false)
+      , _lib_handler(nullptr) {
 
-  if(!(_lib_handler = dlopen("libnetlog.so", RTLD_NOW))) {
+    if(!(_lib_handler = dlopen("libnetlog.so", RTLD_NOW))) {
       printf("NetLog : Can't load libnetlog.so %s\n", dlerror());
-  }
-  else {
-    init = (bool(*)(int, size_t, const char*)) dlsym(_lib_handler, "init");
-    log_msg = (void(*)(const char*)) dlsym(_lib_handler, "log_msg");
- 
-    if(init && log_msg) {
-      if(init(SERVER_PORT, MSG_QUEUE_SIZE, MSG_FORMAT))
-        _is_valid = true;
-      else
-        printf("NetLog : Can't start server at port %d\n", SERVER_PORT);
     }
-    else
-      printf("NetLog : Can't load some functions\n");
+    else {
+      init = (bool(*)(int, size_t, const char*)) dlsym(_lib_handler, "init");
+      log_msg = (void(*)(const char*)) dlsym(_lib_handler, "log_msg");
+
+      if(init && log_msg) {
+        if(init(NET_LOG_SERVER_PORT,
+                NET_LOG_MSG_QUEUE_SIZE,
+                NET_LOG_MSG_FORMAT))
+          _is_valid = true;
+        else
+          printf("NetLog : Can't start server at port %d\n", NET_LOG_SERVER_PORT);
+      }
+      else
+        printf("NetLog : Can't load some functions\n");
     }
   }
 
@@ -92,14 +96,21 @@ protected:
   void* _lib_handler;
 };
 
-static void netlog(const std::string& msg, ...) {
-  va_list args1;
-  va_start(args1, msg);
-  va_list args2;
-  va_copy(args2, args1);
-  std::vector<char> buf(1 + vsnprintf(nullptr, 0, msg.c_str(), args1));
-  va_end(args1);
-  vsnprintf(buf.data(), buf.size(), msg.c_str(), args2);
-  va_end(args2);
-  NetLog::Instance().Log(std::string(buf.begin(),buf.end()));
-}
+class netlog : public std::ostringstream {
+public:
+  netlog(){}
+  netlog(const std::string& msg, ...) {
+    va_list args1;
+    va_start(args1, msg);
+    va_list args2;
+    va_copy(args2, args1);
+    std::vector<char> buf(1 + vsnprintf(nullptr, 0, msg.c_str(), args1));
+    va_end(args1);
+    vsnprintf(buf.data(), buf.size(), msg.c_str(), args2);
+    va_end(args2);
+    *this << std::string(buf.begin(),buf.end());
+  }
+  virtual ~netlog() {
+    NetLog::Instance().Log(str());
+  }
+};
