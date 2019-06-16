@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 Adam Kaniewski
+Copyright (c) 2019 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -21,89 +21,79 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "NetReader.h"
-#include "Logger.h"
-#include "MessageType.h"
+#include "NetLoggerClient.h"
 #include "NetLogger.h"
-
-#include <unistd.h>
-#include <cstdlib>
+#include "Message.h"
+#include "MessageType.h"
+#include "Logger.h"
 
 const size_t CHECK_INTERVAL_IN_SEC = 3;
 
-NetReader::NetReader() {
-  _connection = std::make_shared<Connection>();
-  _connection->Init();
+NetLoggerClient::NetLoggerClient(std::shared_ptr<NetLogger> owner, bool is_sender)
+    : _owner(owner)
+    , _is_sender(is_sender) {
 }
 
-void NetReader::Init(const std::string& host, int port) {
-  if(!_checker) {
+void NetLoggerClient::Init(std::shared_ptr<Connection> connection,
+                                      int port,
+                                      std::string host) {
     _checker = std::make_shared<ConnectionChecker>(shared_from_this()
-                                                 ,_connection
+                                                ,connection
                                                 ,CHECK_INTERVAL_IN_SEC
                                                 ,host
                                                 ,port);
     _checker->Init();
-    log()->info("NetReader: Awaiting connection");
-  }
-  else
-    log()->error("NetReader: Already initialized");
 }
 
-
-void NetReader::OnConnected(std::shared_ptr<Client> client) {
-  log()->info("NetReader: Connected");
+void NetLoggerClient::OnConnected(std::shared_ptr<Client> client) {
   std::lock_guard<std::mutex> lock(_client_mutex);
   _client = client;
   _client->Start(shared_from_this());
+
+  std::vector<std::shared_ptr<Message> > messages;
+  _owner->GetMsgs(messages);
+  for(auto msg : messages)
+    _client->Send(msg);
 }
 
-void NetReader::OnDisconnected() {
+void NetLoggerClient::OnDisconnected() {
   CloseClient();
 }
 
-void NetReader::SendPing() {
+void NetLoggerClient::SendPing() {
   std::lock_guard<std::mutex> lock(_client_mutex);
   if(_client)
     _client->Send(std::make_shared<Message>((uint8_t)MessageType::ARE_U_ALIVE));
+
 }
 
-void NetReader::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
+void NetLoggerClient::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
   _checker->Wake();
   switch(MessageType::TypeFromInt(msg->_type)) {
     case MessageType::YOU_SHOULD_KNOW_THAT:
-      OnLogReceived(msg->ToString());
+      _owner->Log(msg->ToString());
       break;
     default:
       break;
   }
 }
 
-void NetReader::OnLogReceived(const std::string& msg) {
-  log()->info("{}", msg);
+void NetLoggerClient::SendLog(std::shared_ptr<Message> msg) {
+  std::lock_guard<std::mutex> lock(_client_mutex);
+  if(_client)
+    _client->Send(msg);
 }
 
-void NetReader::OnClientClosed(std::shared_ptr<Client> client) {
+void NetLoggerClient::OnClientClosed(std::shared_ptr<Client> client) {
   CloseClient();
 }
 
-void NetReader::CloseClient(){
+void NetLoggerClient::CloseClient(){
   std::lock_guard<std::mutex> lock(_client_mutex);
   if(_client) {
-    log()->info("NetReader: Connection closed, awaiting new connection");
+    if(!_is_sender)
+      log()->info("NetReader: Connection closed, awaiting new connection");
     _client.reset();
   }
   _checker->Reset();
-}
-
-int main(int argc,const char** args) {
-  log()->set_pattern("%v");
-  std::shared_ptr<NetLogger> reader = std::make_shared<NetLogger>(false);
-  if(argc == 3)
-    reader->Init(std::atoi(args[2]), args[1]);
-  else
-    reader->Init(std::atoi(args[1]), {});
-  while(true)
-    sleep(1);
-  return 0;
 }

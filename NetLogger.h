@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 Adam Kaniewski
+Copyright (c) 2018 - 2019 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -23,60 +23,74 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
-#include "ServerImpl.h"
 
 #include <atomic>
 #include <vector>
 #include <map>
+#include <memory>
+#include <mutex>
 
 class Connection;
+class NetLoggerServer;
+class NetLoggerClient;
+class Client;
+class Message;
 
 
 /**
- * Network server for sending logs.
+ * Logs Sender / Reader
  */
 
-class NetLogger : public ServerImpl {
+class NetLogger : public std::enable_shared_from_this<NetLogger> {
 public:
  /**
   * Class constructor
+  * \param is_sender if true NetLogger will act as sender. Acts as a reader if false
   * \param msg_queue_size amount of last logs which will be stored
   * \param log_format spdlog format which will be added to messages
   */
-  NetLogger(size_t msg_queue_size, std::string log_format);
+  NetLogger(bool is_sender, size_t msg_queue_size = 0, std::string log_format = {});
+
   /**
-   * Overrides ServerImpl
+   * Initialize network operations
+   * \param port network port used for connection
+   * \param host if empty NetLogger will act as a server, otherwise it will try to connect to it.
+   * \return true on success
    */
-  void OnClientConnected(std::shared_ptr<Client> client) override;
-  /**
-   * Overrides ServerImpl
-   */
-  void OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) override;
+  bool Init(int port, std::string host);
+
+ /**
+  * Called by NetLoggerClient / NetLoggerServer after
+  * establishing a connection
+  * \param out_messages stored messages
+  */
+  void GetMsgs(std::vector<std::shared_ptr<Message> >& out_messages);
 
   /**
    * Passthrough message trough spdlog to add formating
-   * msg log message
+   * \param msg log message
    */
   void Log(const std::string& msg);
 
   /**
    * Adds new logs to store and send to connected clients
-   * msg log message
+   * \param msg log message
    */
   void LogInternal(const std::string& msg);
 
 protected :
   /**
-   * Stores a messege for future connectd clinets
-   * \param msg network message object containig log
+   * Stores a message for future connected clinets
+   * \param msg network message object containing log
    */
   void AddMsg(std::shared_ptr<Message> msg);
-   /**
-   * Sends all stored messages
-   * \param client which will receive messages
-   */ 
-  void SendMsgs(std::shared_ptr<Client> client);
+
+  std::shared_ptr<Connection> _connection; ///< connection instance
+  std::shared_ptr<NetLoggerServer> _server; ///< sever instance or null if working as a client
+  std::shared_ptr<NetLoggerClient> _client; ///< client instance or null if working as a sever
   std::vector<std::shared_ptr<Message> > _messages; ///< stored messages collection
   std::mutex _msgs_mutex; ///< messages collection access mutex
+  bool _is_sender; ///< informs if this is a sender or reader
   size_t _msg_queue_size; ///< max amount of stored messages
+  std::string _log_format; ///< format used by spdlog
 };

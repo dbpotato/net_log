@@ -67,18 +67,21 @@ set(COMMON
   ${COMMON_DIR}/tools/net/SocketObject.cpp
   ${COMMON_DIR}/tools/net/Client.cpp
   ${COMMON_DIR}/tools/net/Connection.cpp
+  ${COMMON_DIR}/tools/net/Transporter.cpp
   ${COMMON_DIR}/tools/net/Message.cpp
   ${COMMON_DIR}/tools/net/MessageBuilder.cpp
   ${COMMON_DIR}/tools/thread/PosixThread.cpp
+  ${COMMON_DIR}/tools/net/Server.cpp
+  ${COMMON_DIR}/tools/net/ServerImpl.cpp
+  ${COMMON_DIR}/tools/net/ConnectionChecker.cpp
+  ${SRC_DIR}/NetLogger.cpp
+  ${SRC_DIR}/NetLoggerServer.cpp
+  ${SRC_DIR}/NetLoggerClient.cpp
 )
 
 set(NETLOG
   ${COMMON}
-  ${SRC_DIR}/NetLogger.cpp
   ${SRC_DIR}/NetLoggerLib.cpp
-  ${COMMON_DIR}/tools/net/Server.cpp
-  ${COMMON_DIR}/tools/net/ServerImpl.cpp
-  ${COMMON_DIR}/tools/thread/PosixThread.cpp
 )
 
 set(EXAMLE
@@ -88,8 +91,6 @@ set(EXAMLE
 set(NETREAD
   ${COMMON}
   ${SRC_DIR}/NetReader.cpp
-  ${COMMON_DIR}/tools/net/ConnectionChecker.cpp
-  ${COMMON_DIR}/tools/net/Server.cpp
 )
 
 set(LIBS pthread dl)

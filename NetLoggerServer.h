@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 - 2019 Adam Kaniewski
+Copyright (c) 2019 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -21,24 +21,38 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "NetLogger.h"
+#pragma once
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h> 
-#include <unistd.h>
+#include "ServerImpl.h"
 
-std::shared_ptr<NetLogger> g_logger;
+class NetLogger;
 
-extern "C" bool init(int port, const char* host, size_t max_queue, const char* log_format) {
-  if(!g_logger) {
-    g_logger = std::make_shared<NetLogger>(true, max_queue, log_format);
-    return g_logger->Init(port, host);
-  }
-  return false;
-}
+/**
+ * Server version implementation of NetLogger
+ */
+class NetLoggerServer : public ServerImpl {
+public:
+ /**
+  * Class constructor
+  * \param owner NetLogger parent object
+  */
+  NetLoggerServer(std::shared_ptr<NetLogger> owner);
 
-extern "C" void log_msg(const char* msg) {
-  if(g_logger)
-    g_logger->Log(msg);
-}
+  /**
+  * Overrides ServerImpl
+  */
+  void OnClientConnected(std::shared_ptr<Client> client) override;
+
+  /**
+  * Overrides ServerImpl
+  */
+  void OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) override;
+
+  /**
+  * Sends messege to connected clients
+  * \param msg messege to send
+  */
+  void SendLog(std::shared_ptr<Message> msg);
+private:
+  std::shared_ptr<NetLogger> _owner; ///< NetLogger instance
+};

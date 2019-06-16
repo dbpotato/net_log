@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 Adam Kaniewski
+Copyright (c) 2018 - 2019 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -30,10 +30,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <vector>
 #include <sstream>
 
-static const int NET_LOG_SERVER_PORT = 4156; ///< listening port
 
 /*
- * Number of stored logs. On connection client
+ * Connection port. It's usage depends on NET_LOG_HOST value.
+ */
+static const int NET_LOG_PORT = 4156;
+
+/*
+ * Leave empty to make the netlog creating a server which will listen for connection
+ * on NET_LOG_PORT. Provide a hostname and netlog will automatically be
+ * connecting / reconnecting with NET_LOG_HOST:NET_LOG_PORT.
+ */
+static const char* NET_LOG_HOST = "localhost";
+
+/*
+ * Number of stored logs. On connection readers
  * will recive all stored logs.
  */
 static const int NET_LOG_MSG_QUEUE_SIZE = 200;
@@ -58,16 +69,17 @@ public:
       printf("NetLog : Can't load libnetlog.so %s\n", dlerror());
     }
     else {
-      init = (bool(*)(int, size_t, const char*)) dlsym(_lib_handler, "init");
+      init = (bool(*)(int, const char*, size_t, const char*)) dlsym(_lib_handler, "init");
       log_msg = (void(*)(const char*)) dlsym(_lib_handler, "log_msg");
 
       if(init && log_msg) {
-        if(init(NET_LOG_SERVER_PORT,
+        if(init(NET_LOG_PORT,
+                NET_LOG_HOST,
                 NET_LOG_MSG_QUEUE_SIZE,
                 NET_LOG_MSG_FORMAT))
           _is_valid = true;
         else
-          printf("NetLog : Can't start server at port %d\n", NET_LOG_SERVER_PORT);
+          printf("NetLog : Can't start server at port %d\n", NET_LOG_PORT);
       }
       else
         printf("NetLog : Can't load some functions\n");
@@ -90,7 +102,7 @@ public:
     return instance;
   }
 protected:
-  bool(*init)(int, size_t, const char*);
+  bool(*init)(int, const char*, size_t, const char*);
   void(*log_msg)(const char*);
   bool _is_valid;
   void* _lib_handler;
@@ -99,7 +111,7 @@ protected:
 class netlog : public std::ostringstream {
 public:
   netlog(){}
-  netlog(const std::string& msg, ...) {
+  netlog(const std::string msg, ...) {
     va_list args1;
     va_start(args1, msg);
     va_list args2;

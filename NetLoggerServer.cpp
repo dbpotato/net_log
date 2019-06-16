@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 - 2019 Adam Kaniewski
+Copyright (c) 2019 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -21,24 +21,41 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "NetLoggerServer.h"
 #include "NetLogger.h"
+#include "Message.h"
+#include "MessageType.h"
+#include "Logger.h"
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h> 
-#include <unistd.h>
-
-std::shared_ptr<NetLogger> g_logger;
-
-extern "C" bool init(int port, const char* host, size_t max_queue, const char* log_format) {
-  if(!g_logger) {
-    g_logger = std::make_shared<NetLogger>(true, max_queue, log_format);
-    return g_logger->Init(port, host);
-  }
-  return false;
+NetLoggerServer::NetLoggerServer(std::shared_ptr<NetLogger> owner)
+    : _owner(owner) {
 }
 
-extern "C" void log_msg(const char* msg) {
-  if(g_logger)
-    g_logger->Log(msg);
+void NetLoggerServer::OnClientConnected(std::shared_ptr<Client> client) {
+  ServerImpl::OnClientConnected(client);
+
+  std::vector<std::shared_ptr<Message> > messages;
+  _owner->GetMsgs(messages);
+  for(auto msg : messages)
+    client->Send(msg);
+}
+
+void NetLoggerServer::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
+  switch (MessageType::TypeFromInt(msg->_type)) {
+    case MessageType::ARE_U_ALIVE:
+      client->Send(std::make_shared<Message>((uint8_t)MessageType::IAM_ALIVE));
+      break;
+    case MessageType::YOU_SHOULD_KNOW_THAT:
+      _owner->Log(msg->ToString());
+      break;
+    default:
+      break;
+  }
+}
+
+void NetLoggerServer::SendLog(std::shared_ptr<Message> msg) {
+  std::vector<std::shared_ptr<Client> > clients;
+  GetClients(clients);
+  for(auto client : clients)
+    client->Send(msg);
 }
