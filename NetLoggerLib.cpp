@@ -30,12 +30,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 std::shared_ptr<NetLogger> g_logger;
 
-extern "C" bool init(int port, const char* host, size_t max_queue, const char* log_format) {
+extern "C" int init(int port, const char* host, size_t max_queue, const char* log_format) {
   if(!g_logger) {
     g_logger = std::make_shared<NetLogger>(true, max_queue, log_format);
-    return g_logger->Init(port, host);
+    return g_logger->Init(port, host) ? 0 : 2;
   }
-  return false;
+  return 1;
 }
 
 extern "C" void log_msg(const char* msg) {

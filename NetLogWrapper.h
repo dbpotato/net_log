@@ -60,8 +60,8 @@ static const char* NET_LOG_MSG_FORMAT="%v";
 class NetLog {
 public:
   NetLog()
-      : init(nullptr)
-      , log_msg(nullptr)
+      : _init(nullptr)
+      , _log_msg(nullptr)
       , _is_valid(false)
       , _lib_handler(nullptr) {
 
@@ -69,14 +69,14 @@ public:
       printf("NetLog : Can't load libnetlog.so %s\n", dlerror());
     }
     else {
-      init = (bool(*)(int, const char*, size_t, const char*)) dlsym(_lib_handler, "init");
-      log_msg = (void(*)(const char*)) dlsym(_lib_handler, "log_msg");
+      _init = (int(*)(int, const char*, size_t, const char*)) dlsym(_lib_handler, "init");
+      _log_msg = (void(*)(const char*)) dlsym(_lib_handler, "log_msg");
 
-      if(init && log_msg) {
-        if(init(NET_LOG_PORT,
+      if(_init && _log_msg) {
+        if(_init(NET_LOG_PORT,
                 NET_LOG_HOST,
                 NET_LOG_MSG_QUEUE_SIZE,
-                NET_LOG_MSG_FORMAT))
+                NET_LOG_MSG_FORMAT) < 2)
           _is_valid = true;
         else
           printf("NetLog : Can't start server at port %d\n", NET_LOG_PORT);
@@ -94,7 +94,7 @@ public:
   void Log(const std::string& msg)
   {
     if(_is_valid) {
-      log_msg(msg.c_str());
+      _log_msg(msg.c_str());
     }
   }
   static NetLog& Instance() {
@@ -102,8 +102,8 @@ public:
     return instance;
   }
 protected:
-  bool(*init)(int, const char*, size_t, const char*);
-  void(*log_msg)(const char*);
+  int(*_init)(int, const char*, size_t, const char*);
+  void(*_log_msg)(const char*);
   bool _is_valid;
   void* _lib_handler;
 };

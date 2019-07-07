@@ -85,7 +85,7 @@ public:
   /**
    * Implementes ClientManager interface
    */
-  void OnMsgSent(std::shared_ptr<Client> client, std::shared_ptr<Message> msg, bool success){;}
+  void OnMsgSent(std::shared_ptr<Client> client, std::shared_ptr<Message> msg, bool success) override {;}
 private:
 
   /**

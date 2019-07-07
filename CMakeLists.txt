@@ -1,5 +1,5 @@
 #[[
-Copyright (c) 2018 Adam Kaniewski
+Copyright (c) 2018 - 2019 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -23,15 +23,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.2)
 
-set (CXX_FLAGS
+set(CXX_FLAGS
  "-O2 \
  -std=gnu++11 \
  -Wall \
  -Werror \
  -Wundef \
  -Wcast-align \
+ -Wcast-qual \
  -Wno-unused \
- -Wcast-qual"
+ -Wno-delete-non-virtual-dtor"
+)
+
+set(LD_FLAGS
+ "-lpthread \
+  -ldl"
 )
 
 #add_definitions(-DENABLE_DEBUG_LOGGER)
@@ -93,13 +99,11 @@ set(NETREAD
   ${SRC_DIR}/NetReader.cpp
 )
 
-set(LIBS pthread dl)
-
 add_library(netlog SHARED ${NETLOG})
-target_link_libraries(netlog ${LIBS})
+target_link_libraries(netlog ${LD_FLAGS})
 
 add_executable(example ${EXAMLE})
-target_link_libraries(example ${LIBS})
+target_link_libraries(example ${LD_FLAGS})
 
 add_executable(nread ${NETREAD})
-target_link_libraries(nread ${LIBS})
+target_link_libraries(nread ${LD_FLAGS})
