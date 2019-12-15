@@ -29,46 +29,34 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 const size_t CHECK_INTERVAL_IN_SEC = 3;
 
-NetLoggerClient::NetLoggerClient(std::shared_ptr<NetLogger> owner, bool is_sender)
-    : _owner(owner)
+NetLoggerClient::NetLoggerClient(std::shared_ptr<Connection> connection,
+                                 std::shared_ptr<NetLogger> owner,
+                                 int port,
+                                 const std::string& host,
+                                 bool is_sender)
+    : ConnectionChecker(connection,
+                        CHECK_INTERVAL_IN_SEC,
+                        host,
+                        port,
+                        false)
+    , _owner(owner)
     , _is_sender(is_sender) {
 }
 
-void NetLoggerClient::Init(std::shared_ptr<Connection> connection,
-                                      int port,
-                                      std::string host) {
-    _checker = std::make_shared<ConnectionChecker>(shared_from_this()
-                                                ,connection
-                                                ,CHECK_INTERVAL_IN_SEC
-                                                ,host
-                                                ,port);
-    _checker->Init();
-}
+void NetLoggerClient::OnClientConnected(std::shared_ptr<Client> client,  NetError err) {
+  ConnectionChecker::OnClientConnected(client, err);
 
-void NetLoggerClient::OnConnected(std::shared_ptr<Client> client) {
-  std::lock_guard<std::mutex> lock(_client_mutex);
-  _client = client;
-  _client->Start(shared_from_this());
+  if(err != NetError::OK)
+    return;
 
   std::vector<std::shared_ptr<Message> > messages;
   _owner->GetMsgs(messages);
   for(auto msg : messages)
-    _client->Send(msg);
-}
-
-void NetLoggerClient::OnDisconnected() {
-  CloseClient();
-}
-
-void NetLoggerClient::SendPing() {
-  std::lock_guard<std::mutex> lock(_client_mutex);
-  if(_client)
-    _client->Send(std::make_shared<Message>((uint8_t)MessageType::ARE_U_ALIVE));
-
+    client->Send(msg);
 }
 
 void NetLoggerClient::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
-  _checker->Wake();
+  ConnectionChecker::OnClientRead(client, msg);
   switch(MessageType::TypeFromInt(msg->_type)) {
     case MessageType::YOU_SHOULD_KNOW_THAT:
       _owner->Log(msg->ToString());
@@ -78,22 +66,18 @@ void NetLoggerClient::OnClientRead(std::shared_ptr<Client> client, std::shared_p
   }
 }
 
-void NetLoggerClient::SendLog(std::shared_ptr<Message> msg) {
-  std::lock_guard<std::mutex> lock(_client_mutex);
-  if(_client)
-    _client->Send(msg);
-}
-
 void NetLoggerClient::OnClientClosed(std::shared_ptr<Client> client) {
-  CloseClient();
+  ConnectionChecker::OnClientClosed(client);
+  if(!_is_sender)
+    log()->info("NetReader: Connection closed, awaiting new connection");
 }
 
-void NetLoggerClient::CloseClient(){
-  std::lock_guard<std::mutex> lock(_client_mutex);
-  if(_client) {
-    if(!_is_sender)
-      log()->info("NetReader: Connection closed, awaiting new connection");
-    _client.reset();
-  }
-  _checker->Reset();
+std::shared_ptr<Message> NetLoggerClient::CreatePingMessage() {
+  return std::make_shared<Message>((uint8_t)MessageType::ARE_U_ALIVE);
+}
+
+void NetLoggerClient::SendLog(std::shared_ptr<Message> msg) {
+  auto client = GetClient();
+  if(client)
+    client->Send(msg);
 }

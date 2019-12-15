@@ -28,43 +28,35 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 class NetLogger;
 
+
 /**
  * Client version implementation of NetLogger
  */
-class NetLoggerClient : public std::enable_shared_from_this<NetLoggerClient>
-               , public ClientManager
-               , public ConnectionKeeper {
+class NetLoggerClient : public ConnectionChecker {
 public:
  /**
   * Class constructor
-  * \param owner NetLogger parent object
-  * \param is_sender informs if it will work as reader or sender
-  */
-  NetLoggerClient(std::shared_ptr<NetLogger> owner, bool is_sender);
-
-
- /**
-  * Initialize and starts ConnectionKeeper
   * \param connection Connection instance
+  * \param owner NetLogger parent object
   * \param port host's port
   * \param host host's address
+  * \param is_sender informs if it will work as reader or sender
   */
-  void Init(std::shared_ptr<Connection> connection, int port, std::string host);
+  NetLoggerClient(std::shared_ptr<Connection> connection,
+                  std::shared_ptr<NetLogger> owner,
+                  int port,
+                  const std::string& host,
+                  bool is_sender);
 
   /**
    * Implementes ConnectionKeeper interface
    */
-  void OnConnected(std::shared_ptr<Client> client) override;
+  void OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
 
   /**
    * Implementes ConnectionKeeper interface
    */
-  void OnDisconnected() override;
-
-  /**
-   * Implementes ConnectionKeeper interface
-   */
-  void SendPing() override;
+  std::shared_ptr<Message> CreatePingMessage() override;
 
   /**
    * Passes log to connected client
@@ -86,16 +78,8 @@ public:
    * Implementes ClientManager interface
    */
   void OnMsgSent(std::shared_ptr<Client> client, std::shared_ptr<Message> msg, bool success) override {;}
+
 private:
-
-  /**
-   * Relese Client object after disconnection
-   */
-  void CloseClient();
-
   std::shared_ptr<NetLogger> _owner; ///< NetLogger instance
-  std::shared_ptr<ConnectionChecker> _checker; ///< checker instance
-  std::shared_ptr<Client> _client; ///< connected Client
-  std::mutex _client_mutex; ///< client access mutex
   bool _is_sender; ///<informs if this is a sender or reader
 };

@@ -21,80 +21,12 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "NetReader.h"
-#include "Logger.h"
-#include "MessageType.h"
+
 #include "NetLogger.h"
+#include "Logger.h"
 
 #include <unistd.h>
 #include <cstdlib>
-
-const size_t CHECK_INTERVAL_IN_SEC = 3;
-
-NetReader::NetReader() {
-  _connection = std::make_shared<Connection>();
-  _connection->Init();
-}
-
-void NetReader::Init(const std::string& host, int port) {
-  if(!_checker) {
-    _checker = std::make_shared<ConnectionChecker>(shared_from_this()
-                                                 ,_connection
-                                                ,CHECK_INTERVAL_IN_SEC
-                                                ,host
-                                                ,port);
-    _checker->Init();
-    log()->info("NetReader: Awaiting connection");
-  }
-  else
-    log()->error("NetReader: Already initialized");
-}
-
-
-void NetReader::OnConnected(std::shared_ptr<Client> client) {
-  log()->info("NetReader: Connected");
-  std::lock_guard<std::mutex> lock(_client_mutex);
-  _client = client;
-  _client->Start(shared_from_this());
-}
-
-void NetReader::OnDisconnected() {
-  CloseClient();
-}
-
-void NetReader::SendPing() {
-  std::lock_guard<std::mutex> lock(_client_mutex);
-  if(_client)
-    _client->Send(std::make_shared<Message>((uint8_t)MessageType::ARE_U_ALIVE));
-}
-
-void NetReader::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
-  _checker->Wake();
-  switch(MessageType::TypeFromInt(msg->_type)) {
-    case MessageType::YOU_SHOULD_KNOW_THAT:
-      OnLogReceived(msg->ToString());
-      break;
-    default:
-      break;
-  }
-}
-
-void NetReader::OnLogReceived(const std::string& msg) {
-  log()->info("{}", msg);
-}
-
-void NetReader::OnClientClosed(std::shared_ptr<Client> client) {
-  CloseClient();
-}
-
-void NetReader::CloseClient(){
-  std::lock_guard<std::mutex> lock(_client_mutex);
-  if(_client) {
-    log()->info("NetReader: Connection closed, awaiting new connection");
-    _client.reset();
-  }
-  _checker->Reset();
-}
 
 int main(int argc,const char** args) {
   log()->set_pattern("%v");

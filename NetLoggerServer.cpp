@@ -31,13 +31,29 @@ NetLoggerServer::NetLoggerServer(std::shared_ptr<NetLogger> owner)
     : _owner(owner) {
 }
 
-void NetLoggerServer::OnClientConnected(std::shared_ptr<Client> client) {
-  ServerImpl::OnClientConnected(client);
+bool NetLoggerServer::Init(int port, std::shared_ptr<Connection> connection) {
+  if(_server)
+    return false;
+
+  _server = connection->CreateServer(port, shared_from_this());
+
+  return (_server != nullptr);
+}
+
+void NetLoggerServer::OnClientConnected(std::shared_ptr<Client> client, NetError err) {
+  if(err != NetError::OK)
+    return;
 
   std::vector<std::shared_ptr<Message> > messages;
   _owner->GetMsgs(messages);
   for(auto msg : messages)
     client->Send(msg);
+}
+
+void NetLoggerServer::OnClientClosed(std::shared_ptr<Client> client) {
+}
+
+void NetLoggerServer::OnMsgSent(std::shared_ptr<Client> client, std::shared_ptr<Message> msg, bool success) {
 }
 
 void NetLoggerServer::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
@@ -53,9 +69,13 @@ void NetLoggerServer::OnClientRead(std::shared_ptr<Client> client, std::shared_p
   }
 }
 
+bool NetLoggerServer::IsRaw() {
+  return false;
+}
+
 void NetLoggerServer::SendLog(std::shared_ptr<Message> msg) {
   std::vector<std::shared_ptr<Client> > clients;
-  GetClients(clients);
+  _server->GetClients(clients);
   for(auto client : clients)
     client->Send(msg);
 }

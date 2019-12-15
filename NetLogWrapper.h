@@ -30,7 +30,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <vector>
 #include <sstream>
 
-
+/*
+ * Clang's exit-time destructor workaround
+ */
+#ifndef NETLOG_DEFINE_STATIC_LOCAL
+  #define NETLOG_DEFINE_STATIC_LOCAL(name) static NetLog& name = *new NetLog;
+#endif
 /*
  * Connection port. It's usage depends on NET_LOG_HOST value.
  */
@@ -86,11 +91,6 @@ public:
     }
   }
 
-  ~NetLog() {
-    if(_lib_handler)
-      dlclose(_lib_handler);
-  }
-
   void Log(const std::string& msg)
   {
     if(_is_valid) {
@@ -98,7 +98,7 @@ public:
     }
   }
   static NetLog& Instance() {
-    static NetLog instance;
+    NETLOG_DEFINE_STATIC_LOCAL(instance);
     return instance;
   }
 protected:

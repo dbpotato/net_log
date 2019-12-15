@@ -48,7 +48,7 @@ NetLogger::NetLogger(bool is_sender, size_t msg_queue_size, std::string log_form
 }
 
 bool NetLogger::Init(int port, std::string host) {
-  set_log_func(spdlog_func, MSG_LOGGER_ID, this);
+  Logger::Instance().SetLogFunc(spdlog_func, MSG_LOGGER_ID, this);
   log(MSG_LOGGER_ID)->set_pattern(_log_format);
 
   _connection = std::make_shared<Connection>();
@@ -59,8 +59,12 @@ bool NetLogger::Init(int port, std::string host) {
     return _server->Init(port, _connection);
   }
 
-  _client = std::make_shared<NetLoggerClient>(shared_from_this(), _is_sender);
-  _client->Init(_connection, port, host);
+  _client = std::make_shared<NetLoggerClient>(_connection,
+                                              shared_from_this(),
+                                              port,
+                                              host,
+                                              _is_sender);
+  _client->Init();
 
   return true;
 }

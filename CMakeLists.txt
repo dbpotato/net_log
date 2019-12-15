@@ -70,6 +70,7 @@ include_directories(
   "${COMMON_DIR}/tools/net")
 
 set(COMMON
+  ${COMMON_DIR}/tools/net/BaseSessionInfo.cpp
   ${COMMON_DIR}/tools/net/SocketObject.cpp
   ${COMMON_DIR}/tools/net/Client.cpp
   ${COMMON_DIR}/tools/net/Connection.cpp
@@ -78,7 +79,6 @@ set(COMMON
   ${COMMON_DIR}/tools/net/MessageBuilder.cpp
   ${COMMON_DIR}/tools/thread/PosixThread.cpp
   ${COMMON_DIR}/tools/net/Server.cpp
-  ${COMMON_DIR}/tools/net/ServerImpl.cpp
   ${COMMON_DIR}/tools/net/ConnectionChecker.cpp
   ${SRC_DIR}/NetLogger.cpp
   ${SRC_DIR}/NetLoggerServer.cpp

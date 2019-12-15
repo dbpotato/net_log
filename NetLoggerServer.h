@@ -23,14 +23,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
-#include "ServerImpl.h"
+#include "Server.h"
+
+#include <memory>
 
 class NetLogger;
 
 /**
  * Server version implementation of NetLogger
  */
-class NetLoggerServer : public ServerImpl {
+class NetLoggerServer : public ClientManager
+                      , public std::enable_shared_from_this<NetLoggerServer>  {
 public:
  /**
   * Class constructor
@@ -38,21 +41,45 @@ public:
   */
   NetLoggerServer(std::shared_ptr<NetLogger> owner);
 
-  /**
-  * Overrides ServerImpl
+ /**
+  * Initialize server
+  * \param port listening port
+  * \param connection connection instance used for sever request
+  * \return true if server started successfully
   */
-  void OnClientConnected(std::shared_ptr<Client> client) override;
+  bool Init(int port, std::shared_ptr<Connection> connection);
 
   /**
-  * Overrides ServerImpl
-  */
+   * Pass messge to connected clients
+   * \param msg Message with log
+   */
+  void SendLog(std::shared_ptr<Message> msg);
+
+  /**
+   * Implementes ClientManager interface
+   */
   void OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) override;
 
   /**
-  * Sends messege to connected clients
-  * \param msg messege to send
-  */
-  void SendLog(std::shared_ptr<Message> msg);
+   * Implementes ClientManager interface
+   */
+  void OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
+
+  /**
+   * Implementes ClientManager interface
+   */
+  void OnClientClosed(std::shared_ptr<Client> client) override;
+
+  /**
+   * Implementes ClientManager interface
+   */
+  void OnMsgSent(std::shared_ptr<Client> client, std::shared_ptr<Message> msg, bool success) override;
+
+  /**
+   * Implementes ClientManager interface
+   */
+  bool IsRaw() override;
 private:
   std::shared_ptr<NetLogger> _owner; ///< NetLogger instance
+  std::shared_ptr<Server> _server; ///< Server instance
 };
