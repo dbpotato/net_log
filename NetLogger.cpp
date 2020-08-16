@@ -51,8 +51,7 @@ bool NetLogger::Init(int port, std::string host) {
   Logger::Instance().SetLogFunc(spdlog_func, MSG_LOGGER_ID, this);
   log(MSG_LOGGER_ID)->set_pattern(_log_format);
 
-  _connection = std::make_shared<Connection>();
-  _connection->Init();
+  _connection = Connection::CreateBasic();
 
   if(host.empty()) {
     _server = std::make_shared<NetLoggerServer>(shared_from_this());
