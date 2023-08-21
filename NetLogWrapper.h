@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 - 2019 Adam Kaniewski
+Copyright (c) 2018 - 2023 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -116,13 +116,15 @@ public:
     va_start(args1, msg);
     va_list args2;
     va_copy(args2, args1);
-    std::vector<char> buf(1 + vsnprintf(nullptr, 0, msg.c_str(), args1));
+    std::vector<char> buf((size_t)(1 + vsnprintf(nullptr, 0, msg.c_str(), args1)));
     va_end(args1);
     vsnprintf(buf.data(), buf.size(), msg.c_str(), args2);
     va_end(args2);
     *this << std::string(buf.begin(),buf.end());
   }
-  virtual ~netlog() {
-    NetLog::Instance().Log(str());
-  }
+  ~netlog() override;
 };
+
+netlog::~netlog() {
+  NetLog::Instance().Log(str());
+}

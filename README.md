@@ -35,7 +35,7 @@ Netlog instance can work as a network client or server depending on NetLogWrappe
 
 nread - Netlog's reader will work as a network client or server depending on passed parameters.
 For example use : **nread 4156** to start reader as a server awaiting connections from NetLog instances,
-use : **nread localhost 4156** to start reader as a client trying to connect to NetLog instance.
+use : **nread 4156 localhost** to start reader as a client trying to connect to NetLog instance.
 
 # License
 

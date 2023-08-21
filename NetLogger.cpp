@@ -24,7 +24,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "NetLogger.h"
 #include "NetLoggerServer.h"
 #include "NetLoggerClient.h"
-#include "Message.h"
+#include "SimpleMessage.h"
 #include "MessageType.h"
 #include "Connection.h"
 #include "Logger.h"
@@ -68,7 +68,7 @@ bool NetLogger::Init(int port, std::string host) {
   return true;
 }
 
-void NetLogger::GetMsgs(std::vector<std::shared_ptr<Message> >& out_messages) {
+void NetLogger::GetMsgs(std::vector<std::shared_ptr<SimpleMessage> >& out_messages) {
   std::lock_guard<std::mutex> lock(_msgs_mutex);
   out_messages = _messages;
 }
@@ -84,7 +84,7 @@ void NetLogger::LogInternal(const std::string& msg) {
   if(!_is_sender)
     return;
 
-  auto msg_obj = std::make_shared<Message>((uint8_t)MessageType::YOU_SHOULD_KNOW_THAT, msg);
+  auto msg_obj = std::make_shared<SimpleMessage>((uint8_t)MessageType::YOU_SHOULD_KNOW_THAT, msg);
   AddMsg(msg_obj);
   if(_server)
     _server->SendLog(msg_obj);
@@ -92,7 +92,7 @@ void NetLogger::LogInternal(const std::string& msg) {
     _client->SendLog(msg_obj);
 }
 
-void NetLogger::AddMsg(std::shared_ptr<Message> msg) {
+void NetLogger::AddMsg(std::shared_ptr<SimpleMessage> msg) {
   if(!_is_sender)
     return;
 

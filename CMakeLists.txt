@@ -1,5 +1,5 @@
 #[[
-Copyright (c) 2018 - 2020 Adam Kaniewski
+Copyright (c) 2018 - 2023 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -22,6 +22,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ]]
 
 cmake_minimum_required(VERSION 3.2)
+project(NetLog)
 
 set(CXX_FLAGS
  "-O2 \
@@ -64,24 +65,29 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPI
 
 
 include_directories(
-  "${COMMON_DIR}/third_party/spdlog/include"
-  "${COMMON_DIR}/tools/thread"
-  "${COMMON_DIR}/tools/logger"
-  "${COMMON_DIR}/tools/net")
+  ${COMMON_DIR}/third_party/spdlog/include
+  ${COMMON_DIR}/tools/thread
+  ${COMMON_DIR}/tools/logger
+  ${COMMON_DIR}/tools/net
+  ${COMMON_DIR}/tools/utils
+)
 
 set(COMMON
   ${COMMON_DIR}/tools/net/SocketContext.cpp
   ${COMMON_DIR}/tools/net/SocketObject.cpp
   ${COMMON_DIR}/tools/net/Client.cpp
   ${COMMON_DIR}/tools/net/Connection.cpp
-  ${COMMON_DIR}/tools/net/Transporter.cpp
   ${COMMON_DIR}/tools/net/ConnectThread.cpp
   ${COMMON_DIR}/tools/net/Epool.cpp
   ${COMMON_DIR}/tools/net/Message.cpp
-  ${COMMON_DIR}/tools/net/MessageBuilder.cpp
-  ${COMMON_DIR}/tools/thread/PosixThread.cpp
+  ${COMMON_DIR}/tools/net/SimpleMessage.cpp
   ${COMMON_DIR}/tools/net/Server.cpp
   ${COMMON_DIR}/tools/net/ConnectionChecker.cpp
+  ${COMMON_DIR}/tools/thread/PosixThread.cpp
+  ${COMMON_DIR}/tools/thread/ThreadLoop.cpp
+  ${COMMON_DIR}/tools/utils/Data.cpp
+  ${COMMON_DIR}/tools/utils/DataResource.cpp
+  ${COMMON_DIR}/tools/utils/TapeCutter.cpp
   ${SRC_DIR}/NetLogger.cpp
   ${SRC_DIR}/NetLoggerServer.cpp
   ${SRC_DIR}/NetLoggerClient.cpp

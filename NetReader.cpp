@@ -31,10 +31,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int main(int argc,const char** args) {
   log()->set_pattern("%v");
   std::shared_ptr<NetLogger> reader = std::make_shared<NetLogger>(false);
-  if(argc == 3)
-    reader->Init(std::atoi(args[2]), args[1]);
-  else
+  if(argc == 3) {
+    reader->Init(std::atoi(args[1]), args[2]);
+  }
+  else if(argc == 2) {
     reader->Init(std::atoi(args[1]), {});
+  } else {
+    log()->info("Usage : nread <port> [host]");
+  }
+
   while(true)
     sleep(1);
   return 0;

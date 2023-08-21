@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Adam Kaniewski
+Copyright (c) 2019 - 2023 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -49,9 +49,14 @@ public:
                   bool is_sender);
 
   /**
+   * Implementes ClientManager interface
+   */
+  bool OnClientConnecting(std::shared_ptr<Client> client, NetError err) override;
+
+  /**
    * Implementes ConnectionKeeper interface
    */
-  void OnClientConnected(std::shared_ptr<Client> client, NetError err) override;
+  void OnClientConnected(std::shared_ptr<Client> client) override;
 
   /**
    * Implementes ConnectionKeeper interface
@@ -74,10 +79,6 @@ public:
    */
   void OnClientClosed(std::shared_ptr<Client> client) override;
 
-  /**
-   * Implementes ClientManager interface
-   */
-  void OnMsgSent(std::shared_ptr<Client> client, std::shared_ptr<Message> msg, bool success) override {;}
 
 private:
   std::shared_ptr<NetLogger> _owner; ///< NetLogger instance

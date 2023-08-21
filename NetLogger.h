@@ -34,7 +34,7 @@ class Connection;
 class NetLoggerServer;
 class NetLoggerClient;
 class Client;
-class Message;
+class SimpleMessage;
 
 
 /**
@@ -64,7 +64,7 @@ public:
   * establishing a connection
   * \param out_messages stored messages
   */
-  void GetMsgs(std::vector<std::shared_ptr<Message> >& out_messages);
+  void GetMsgs(std::vector<std::shared_ptr<SimpleMessage> >& out_messages);
 
   /**
    * Passthrough message trough spdlog to add formating
@@ -83,12 +83,12 @@ protected :
    * Stores a message for future connected clinets
    * \param msg network message object containing log
    */
-  void AddMsg(std::shared_ptr<Message> msg);
+  void AddMsg(std::shared_ptr<SimpleMessage> msg);
 
   std::shared_ptr<Connection> _connection; ///< connection instance
   std::shared_ptr<NetLoggerServer> _server; ///< sever instance or null if working as a client
   std::shared_ptr<NetLoggerClient> _client; ///< client instance or null if working as a sever
-  std::vector<std::shared_ptr<Message> > _messages; ///< stored messages collection
+  std::vector<std::shared_ptr<SimpleMessage> > _messages; ///< stored messages collection
   std::mutex _msgs_mutex; ///< messages collection access mutex
   bool _is_sender; ///< informs if this is a sender or reader
   size_t _msg_queue_size; ///< max amount of stored messages
