@@ -32,36 +32,47 @@ class NetLogger;
 /**
  * Client version implementation of NetLogger
  */
-class NetLoggerClient : public ConnectionChecker {
+class NetLoggerClient
+  : public MonitoringManager
+  , public std::enable_shared_from_this<NetLoggerClient> {
 public:
+
  /**
-  * Class constructor
+  * Creates new instance and performs Init on it.
   * \param connection Connection instance
   * \param owner NetLogger parent object
   * \param port host's port
   * \param host host's address
   * \param is_sender informs if it will work as reader or sender
   */
-  NetLoggerClient(std::shared_ptr<Connection> connection,
+  static std::shared_ptr<NetLoggerClient> Create(std::shared_ptr<Connection> connection,
                   std::shared_ptr<NetLogger> owner,
                   int port,
                   const std::string& host,
                   bool is_sender);
-
   /**
    * Implementes ClientManager interface
    */
   bool OnClientConnecting(std::shared_ptr<Client> client, NetError err) override;
 
   /**
-   * Implementes ConnectionKeeper interface
+   * Implementes ClientManager interface
    */
   void OnClientConnected(std::shared_ptr<Client> client) override;
 
   /**
-   * Implementes ConnectionKeeper interface
+   * Implementes MonitoringManager interface
    */
-  std::shared_ptr<Message> CreatePingMessage() override;
+  void SendPingToClient(std::shared_ptr<Client> client) override;
+  /**
+   * Implementes MonitoringManager interface
+   */
+  void CreateClient(std::shared_ptr<MonitorTask> task, const std::string& url, int port) override;
+  /**
+   * Implementes MonitoringManager interface
+   */
+  void OnClientUnresponsive(std::shared_ptr<Client> client) override {};
+
 
   /**
    * Passes log to connected client
@@ -80,7 +91,26 @@ public:
   void OnClientClosed(std::shared_ptr<Client> client) override;
 
 
+protected:
+ /**
+  * Class constructor
+  * \param connection Connection instance
+  * \param owner NetLogger parent object
+  * \param is_sender informs if it will work as reader or sender
+  */
+  NetLoggerClient(std::shared_ptr<Connection> connection,
+                  std::shared_ptr<NetLogger> owner,
+                  bool is_sender);
+  /**
+   * Registers itself in ConnectionChecker
+  * \param port host's port
+  * \param host host's address
+  */
+  void Init(const std::string& host, int port);
+
 private:
   std::shared_ptr<NetLogger> _owner; ///< NetLogger instance
   bool _is_sender; ///<informs if this is a sender or reader
+  std::shared_ptr<Connection> _connection; ///< Connection instance
+  std::shared_ptr<Client> _client; ///< connected Client obj
 };

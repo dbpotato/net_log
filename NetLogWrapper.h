@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 - 2023 Adam Kaniewski
+Copyright (c) 2018 - 2024 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -37,16 +37,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   #define NETLOG_DEFINE_STATIC_LOCAL(name) static NetLog& name = *new NetLog;
 #endif
 /*
- * Connection port. It's usage depends on NET_LOG_HOST value.
+ * Connection port. It's usage depends on DEFAULT_NET_LOG_HOST value.
  */
-static const int NET_LOG_PORT = 4156;
+static const int DEFAULT_NET_LOG_PORT = 4156;
 
 /*
  * Leave empty to make the netlog creating a server which will listen for connection
  * on NET_LOG_PORT. Provide a hostname and netlog will automatically be
- * connecting / reconnecting with NET_LOG_HOST:NET_LOG_PORT.
+ * connecting / reconnecting with DEFAULT_NET_LOG_HOST:DEFAULT_NET_LOG_PORT.
  */
-static const char* NET_LOG_HOST = "localhost";
+static const char* DEFAULT_NET_LOG_HOST = "localhost";
+
+/*
+* Used to override DEFAULT_NET_LOG_PORT
+*/
+static const char* ENV_NET_LOG_PORT_VAR_NAME = "NET_LOG_SERVER_PORT";
+
+/*
+* Used to override DEFAULT_NET_LOG_HOST
+*/
+static const char* ENV_NET_LOG_HOST_VAR_NAME = "NET_LOG_SERVER_HOST";
 
 /*
  * Number of stored logs. On connection readers
@@ -61,6 +71,7 @@ static const int NET_LOG_MSG_QUEUE_SIZE = 200;
  * By defaul nothing is added to original message.
  */
 static const char* NET_LOG_MSG_FORMAT="%v";
+
 
 class NetLog {
 public:
@@ -78,16 +89,32 @@ public:
       _log_msg = (void(*)(const char*)) dlsym(_lib_handler, "log_msg");
 
       if(_init && _log_msg) {
-        if(_init(NET_LOG_PORT,
-                NET_LOG_HOST,
+        const char* host = DEFAULT_NET_LOG_HOST;
+        int port = DEFAULT_NET_LOG_PORT;
+
+        const char* host_env_val = std::getenv(ENV_NET_LOG_HOST_VAR_NAME);
+
+        if(host_env_val){
+          host = host_env_val;
+        }
+
+        const char* port_env_val = std::getenv(ENV_NET_LOG_PORT_VAR_NAME);
+        if(port_env_val) {
+          port = atoi(port_env_val);
+        }
+
+        if(_init(port,
+                host,
                 NET_LOG_MSG_QUEUE_SIZE,
-                NET_LOG_MSG_FORMAT) < 2)
+                NET_LOG_MSG_FORMAT) < 2) {
           _is_valid = true;
-        else
-          printf("NetLog : Can't start server at port %d\n", NET_LOG_PORT);
+        } else {
+          printf("NetLog : Can't start server at port %d\n", port);
+        }
       }
-      else
+      else {
         printf("NetLog : Can't load some functions\n");
+      }
     }
   }
 
@@ -97,11 +124,13 @@ public:
       _log_msg(msg.c_str());
     }
   }
+
   static NetLog& Instance() {
     NETLOG_DEFINE_STATIC_LOCAL(instance);
     return instance;
   }
-protected:
+
+private:
   int(*_init)(int, const char*, size_t, const char*);
   void(*_log_msg)(const char*);
   bool _is_valid;
@@ -122,9 +151,8 @@ public:
     va_end(args2);
     *this << std::string(buf.begin(),buf.end());
   }
-  ~netlog() override;
+  ~netlog() override {
+    NetLog::Instance().Log(str());
+  }
 };
 
-netlog::~netlog() {
-  NetLog::Instance().Log(str());
-}

@@ -19,8 +19,8 @@ To integrate NetLog with your existing code just incude **NetLogWrapper.h**
 in your source files. Take a look at example.cpp
 
 You can configure it by changing default const variables:
-- **NET_LOG_PORT**
-- **NET_LOG_HOST**
+- **DEFAULT_NET_LOG_PORT**
+- **DEFAULT_NET_LOG_HOST**
 - **NET_LOG_MSG_QUEUE_SIZE**
 - **NET_LOG_MSG_FORMAT**
 

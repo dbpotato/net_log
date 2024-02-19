@@ -34,9 +34,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <iostream>
 #include <stdio.h>
 
+
 const int MSG_LOGGER_ID = 10;
 
-void spdlog_func(spdlog::level::level_enum lv, const std::string& str, void* arg) {
+void spdlog_func(Logger::Level lv, const std::string& str, void* arg) {
   auto net_logger = static_cast<NetLogger*>(arg);
   net_logger->LogInternal(str);
 }
@@ -58,13 +59,11 @@ bool NetLogger::Init(int port, std::string host) {
     return _server->Init(port, _connection);
   }
 
-  _client = std::make_shared<NetLoggerClient>(_connection,
-                                              shared_from_this(),
-                                              port,
-                                              host,
-                                              _is_sender);
-  _client->Init();
-
+  _client = NetLoggerClient::Create(_connection,
+                                    shared_from_this(),
+                                    port,
+                                    host,
+                                    _is_sender);
   return true;
 }
 

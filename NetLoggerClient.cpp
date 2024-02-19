@@ -28,24 +28,35 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "MessageType.h"
 #include "Logger.h"
 
-const size_t CHECK_INTERVAL_IN_SEC = 3;
+
+std::shared_ptr<NetLoggerClient> NetLoggerClient::Create(
+                  std::shared_ptr<Connection> connection,
+                  std::shared_ptr<NetLogger> owner,
+                  int port,
+                  const std::string& host,
+                  bool is_sender) {
+  std::shared_ptr<NetLoggerClient> netlogger_client;
+  netlogger_client.reset(new NetLoggerClient(connection, owner, is_sender));
+  netlogger_client->Init(host, port);
+  return netlogger_client;
+}
 
 NetLoggerClient::NetLoggerClient(std::shared_ptr<Connection> connection,
                                  std::shared_ptr<NetLogger> owner,
-                                 int port,
-                                 const std::string& host,
                                  bool is_sender)
-    : ConnectionChecker(connection,
-                        CHECK_INTERVAL_IN_SEC,
-                        host,
-                        port)
-    , _owner(owner)
-    , _is_sender(is_sender) {
+    : _owner(owner)
+    , _is_sender(is_sender)
+    , _connection(connection) {
+}
+
+void NetLoggerClient::Init(const std::string& host, int port) {
+  ConnectionChecker::MointorUrl(host, port, shared_from_this());
 }
 
 bool NetLoggerClient::OnClientConnecting(std::shared_ptr<Client> client, NetError err) {
-  if(err != NetError::OK)
+  if(err != NetError::OK) {
     return false;
+  }
 
   auto msg_builder = std::unique_ptr<SimpleMessageBuilder>(new SimpleMessageBuilder());
   client->SetMsgBuilder(std::move(msg_builder));
@@ -53,17 +64,15 @@ bool NetLoggerClient::OnClientConnecting(std::shared_ptr<Client> client, NetErro
 }
 
 void NetLoggerClient::OnClientConnected(std::shared_ptr<Client> client) {
-  ConnectionChecker::OnClientConnected(client);
-
   std::vector<std::shared_ptr<SimpleMessage>> messages;
+  _client = client;
   _owner->GetMsgs(messages);
-  for(auto msg : messages)
+  for(auto& msg : messages) {
     client->Send(msg);
+  }
 }
 
 void NetLoggerClient::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
-  ConnectionChecker::OnClientRead(client, msg);
-
   std::shared_ptr<SimpleMessage> simple_msg = std::static_pointer_cast<SimpleMessage>(msg);
   auto msg_header = simple_msg->GetHeader();
   auto msg_content = simple_msg->GetContent();
@@ -83,17 +92,21 @@ void NetLoggerClient::OnClientRead(std::shared_ptr<Client> client, std::shared_p
 }
 
 void NetLoggerClient::OnClientClosed(std::shared_ptr<Client> client) {
-  ConnectionChecker::OnClientClosed(client);
-  if(!_is_sender)
+  if(!_is_sender) {
     log()->info("NetReader: Connection closed, awaiting new connection");
+  }
 }
 
-std::shared_ptr<Message> NetLoggerClient::CreatePingMessage() {
-  return std::make_shared<SimpleMessage>((uint8_t)MessageType::ARE_U_ALIVE);
+void NetLoggerClient::CreateClient(std::shared_ptr<MonitorTask> task, const std::string& url, int port) {
+  _connection->CreateClient(port, url, task);
+}
+
+void NetLoggerClient::SendPingToClient(std::shared_ptr<Client> client) {
+  client->Send(std::make_shared<SimpleMessage>((uint8_t)MessageType::ARE_U_ALIVE));
 }
 
 void NetLoggerClient::SendLog(std::shared_ptr<Message> msg) {
-  auto client = GetClient();
-  if(client)
-    client->Send(msg);
+  if(_client) {
+    _client->Send(msg);
+  }
 }

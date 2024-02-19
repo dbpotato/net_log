@@ -30,7 +30,6 @@ set(CXX_FLAGS
  -Wall \
  -Werror \
  -Wundef \
- -Wcast-align \
  -Wcast-qual \
  -Wno-unused \
  -Wno-delete-non-virtual-dtor"
@@ -51,13 +50,13 @@ set(COMMON_DIR "${PROJECT_SOURCE_DIR}/common")
 set(SRC_DIR "${PROJECT_SOURCE_DIR}")
 
 
-if(DEFINED ENV{CXX})
-  message("Using user's compiler : " $ENV{CXX})
-  set(CMAKE_CXX_COMPILER $ENV{CXX})
-else(DEFINED ENV{CXX})
+if(DEFINED ENV{CUSTOM_CXX})
+  message("Using user's compiler : " $ENV{CUSTOM_CXX})
+  set(CMAKE_CXX_COMPILER $ENV{CUSTOM_CXX})
+else(DEFINED ENV{CUSTOM_CXX})
   message("Using default compiler : " ${DEFAULT_CXX})
   set(CMAKE_CXX_COMPILER ${DEFAULT_CXX})
-endif(DEFINED ENV{CXX})
+endif(DEFINED ENV{CUSTOM_CXX})
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build_${CMAKE_CXX_COMPILER})
@@ -69,21 +68,25 @@ include_directories(
   ${COMMON_DIR}/tools/thread
   ${COMMON_DIR}/tools/logger
   ${COMMON_DIR}/tools/net
+  ${COMMON_DIR}/tools/net/utils
+  ${COMMON_DIR}/tools/system
   ${COMMON_DIR}/tools/utils
 )
 
 set(COMMON
+  ${COMMON_DIR}/tools/logger/Logger.cpp
   ${COMMON_DIR}/tools/net/SocketContext.cpp
   ${COMMON_DIR}/tools/net/SocketObject.cpp
   ${COMMON_DIR}/tools/net/Client.cpp
   ${COMMON_DIR}/tools/net/Connection.cpp
   ${COMMON_DIR}/tools/net/ConnectThread.cpp
-  ${COMMON_DIR}/tools/net/Epool.cpp
   ${COMMON_DIR}/tools/net/Message.cpp
   ${COMMON_DIR}/tools/net/SimpleMessage.cpp
   ${COMMON_DIR}/tools/net/Server.cpp
-  ${COMMON_DIR}/tools/net/ConnectionChecker.cpp
-  ${COMMON_DIR}/tools/thread/PosixThread.cpp
+  ${COMMON_DIR}/tools/net/utils/ConnectionChecker.cpp
+  ${COMMON_DIR}/tools/system/Epool.cpp
+  ${COMMON_DIR}/tools/system/PosixThread.cpp
+  ${COMMON_DIR}/tools/thread/DelayedTask.cpp
   ${COMMON_DIR}/tools/thread/ThreadLoop.cpp
   ${COMMON_DIR}/tools/utils/Data.cpp
   ${COMMON_DIR}/tools/utils/DataResource.cpp
