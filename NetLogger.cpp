@@ -73,31 +73,35 @@ void NetLogger::GetMsgs(std::vector<std::shared_ptr<SimpleMessage> >& out_messag
 }
 
 void NetLogger::Log(const std::string& msg) {
-  if(_is_sender)
-    log(MSG_LOGGER_ID)->info(msg);
-  else
+  if(_is_sender) {
+    log(MSG_LOGGER_ID)->info("{}", msg);
+  } else {
     log()->info("{}", msg);
+  }
 }
 
 void NetLogger::LogInternal(const std::string& msg) {
-  if(!_is_sender)
+  if(!_is_sender) {
     return;
+  }
 
   auto msg_obj = std::make_shared<SimpleMessage>((uint8_t)MessageType::YOU_SHOULD_KNOW_THAT, msg);
   AddMsg(msg_obj);
-  if(_server)
+  if(_server) {
     _server->SendLog(msg_obj);
-  else if(_client)
+  } else if(_client) {
     _client->SendLog(msg_obj);
+  }
 }
 
 void NetLogger::AddMsg(std::shared_ptr<SimpleMessage> msg) {
-  if(!_is_sender)
+  if(!_is_sender) {
     return;
-
+  }
   std::lock_guard<std::mutex> lock(_msgs_mutex);
-  if(_messages.size() && (_messages.size() == _msg_queue_size))
+  if(_messages.size() && (_messages.size() == _msg_queue_size)) {
     _messages.erase(_messages.begin());
+  }
   _messages.push_back(msg);
 }
 
