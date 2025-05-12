@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Adam Kaniewski
+Copyright (c) 2019 - 2025 Adam Kaniewski
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -33,8 +33,9 @@ NetLoggerServer::NetLoggerServer(std::shared_ptr<NetLogger> owner)
 }
 
 bool NetLoggerServer::Init(int port, std::shared_ptr<Connection> connection) {
-  if(_server)
+  if(_server) {
     return false;
+  }
 
   _server = connection->CreateServer(port, shared_from_this());
 
@@ -42,8 +43,9 @@ bool NetLoggerServer::Init(int port, std::shared_ptr<Connection> connection) {
 }
 
 bool NetLoggerServer::OnClientConnecting(std::shared_ptr<Client> client, NetError err) {
-  if(err != NetError::OK)
+  if(err != NetError::OK) {
     return false;
+  }
 
   auto msg_builder = std::unique_ptr<SimpleMessageBuilder>(new SimpleMessageBuilder());
   client->SetMsgBuilder(std::move(msg_builder));
@@ -53,8 +55,9 @@ bool NetLoggerServer::OnClientConnecting(std::shared_ptr<Client> client, NetErro
 void NetLoggerServer::OnClientConnected(std::shared_ptr<Client> client) {
   std::vector<std::shared_ptr<SimpleMessage> > messages;
   _owner->GetMsgs(messages);
-  for(auto msg : messages)
+  for(auto msg : messages) {
     client->Send(msg);
+  }
 }
 
 void NetLoggerServer::OnClientRead(std::shared_ptr<Client> client, std::shared_ptr<Message> msg) {
@@ -83,6 +86,7 @@ void NetLoggerServer::OnClientRead(std::shared_ptr<Client> client, std::shared_p
 void NetLoggerServer::SendLog(std::shared_ptr<Message> msg) {
   std::vector<std::shared_ptr<Client> > clients;
   _server->GetClients(clients);
-  for(auto client : clients)
+  for(auto client : clients) {
     client->Send(msg);
+  }
 }

@@ -25,10 +25,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 #include <atomic>
-#include <vector>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
 
 class Connection;
 class NetLoggerServer;
